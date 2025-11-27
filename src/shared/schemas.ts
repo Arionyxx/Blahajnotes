@@ -47,3 +47,12 @@ export const AppMetadataSchema = z.object({
   version: z.string(),
   lastSync: z.string(),
 });
+
+export const SettingsSchema = z.object({
+  theme: z.enum(['light', 'dark']),
+  autoSaveInterval: z.number(), // In milliseconds
+  dataPath: z.string(),
+  language: z.string().default('en'),
+  editorFontSize: z.number().default(14),
+  showLineNumbers: z.boolean().default(true),
+});

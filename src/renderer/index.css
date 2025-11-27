@@ -1,4 +1,25 @@
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --border-color: #ddd;
+  --button-bg: #fff;
+  --button-hover: #f0f0f0;
+  --button-active: #eee;
+}
+
+body.dark {
+  --bg-color: #0f0f0f;
+  --text-color: #ffffff;
+  --border-color: #333;
+  --button-bg: #222;
+  --button-hover: #333;
+  --button-active: #444;
+}
+
 body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -20,6 +41,7 @@ body {
 .ProseMirror {
   outline: none;
   min-height: 100px;
+  color: var(--text-color);
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -32,14 +54,15 @@ body {
 
 .toolbar button {
   padding: 5px 10px;
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
 }
 
 .toolbar button.is-active {
-  background: #eee;
+  background: var(--button-active);
   font-weight: bold;
 }
 
@@ -62,6 +85,10 @@ code {
   font-size: 0.8rem;
 }
 
+body.dark code {
+  color: #a1a1a1;
+}
+
 img {
   max-width: 100%;
   height: auto;
@@ -69,11 +96,11 @@ img {
 
 blockquote {
   padding-left: 1rem;
-  border-left: 2px solid rgba(13, 13, 13, 0.1);
+  border-left: 2px solid var(--border-color);
 }
 
 hr {
   border: none;
-  border-top: 2px solid rgba(13, 13, 13, 0.1);
+  border-top: 2px solid var(--border-color);
   margin: 2rem 0;
 }
