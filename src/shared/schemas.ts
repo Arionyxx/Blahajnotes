@@ -11,14 +11,25 @@ export const NoteSchema = z.object({
 
 export const NodeSchema = z.object({
   id: z.string(),
-  label: z.string(),
-  x: z.number(),
-  y: z.number(),
+  label: z.string().optional(),
+  type: z.string().optional(),
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
+  data: z.record(z.any()),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  selected: z.boolean().optional(),
 });
 
 export const EdgeSchema = z.object({
+  id: z.string(),
   source: z.string(),
   target: z.string(),
+  label: z.string().optional(),
+  type: z.string().optional(),
+  animated: z.boolean().optional(),
 });
 
 export const GraphDataSchema = z.object({
