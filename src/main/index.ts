@@ -1,15 +1,20 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import { FileStore } from './FileStore';
+import { Note, GraphData } from '../shared/types';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
 
+let fileStore: FileStore;
+let mainWindow: BrowserWindow | null = null;
+
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -34,6 +39,40 @@ const createWindow = () => {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
+  const userDataPath = path.join(app.getPath('home'), '.notes-app');
+  fileStore = new FileStore(userDataPath);
+
+  // Register IPC handlers
+  ipcMain.handle('project:load', async () => {
+    return fileStore.readProjectMetadata();
+  });
+  
+  ipcMain.handle('note:save', async (_, note: Note) => {
+    return fileStore.writeNote(note);
+  });
+  
+  ipcMain.handle('note:delete', async (_, id: string) => {
+    return fileStore.deleteNote(id);
+  });
+  
+  ipcMain.handle('graph:save', async (_, graph: GraphData) => {
+    return fileStore.writeGraph(graph);
+  });
+  
+  ipcMain.handle('graph:load', async () => {
+    return fileStore.readGraph();
+  });
+  
+  ipcMain.handle('files:list', async () => {
+    return fileStore.listNotes();
+  });
+
+  fileStore.watch((event, filePath) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('file:changed', { event, filePath });
+    }
+  });
+
   ipcMain.handle('ping', () => 'pong');
   createWindow();
 });
