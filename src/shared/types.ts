@@ -7,16 +7,33 @@ export interface Note {
   updatedAt: string; // ISO 8601 date string
 }
 
+export interface NodeData {
+  role?: string;
+  description?: string;
+  [key: string]: any;
+}
+
 export interface Node {
   id: string;
-  label: string;
-  x: number;
-  y: number;
+  label?: string;
+  type?: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  data: NodeData;
+  width?: number;
+  height?: number;
+  selected?: boolean;
 }
 
 export interface Edge {
+  id: string;
   source: string;
   target: string;
+  label?: string;
+  type?: string;
+  animated?: boolean;
 }
 
 export interface GraphData {
