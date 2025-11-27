@@ -51,3 +51,12 @@ export interface AppMetadata {
   version: string;
   lastSync: string; // ISO 8601 date string
 }
+
+export interface Settings {
+  theme: 'light' | 'dark';
+  autoSaveInterval: number;
+  dataPath: string;
+  language: string;
+  editorFontSize: number;
+  showLineNumbers: boolean;
+}

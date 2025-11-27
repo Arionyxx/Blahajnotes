@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { FileStore } from './FileStore';
@@ -38,11 +38,32 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', () => {
+app.on('ready', async () => {
   const userDataPath = path.join(app.getPath('home'), '.notes-app');
   fileStore = new FileStore(userDataPath);
+  // Initialize settings to ensure dataPath is correct
+  await fileStore.readSettings();
 
   // Register IPC handlers
+  ipcMain.handle('settings:load', async () => {
+    return fileStore.readSettings();
+  });
+
+  ipcMain.handle('settings:save', async (_, settings) => {
+    return fileStore.writeSettings(settings);
+  });
+
+  ipcMain.handle('dialog:openDirectory', async () => {
+    if (!mainWindow) return null;
+    const result = await dialog.showOpenDialog(mainWindow, {
+      properties: ['openDirectory']
+    });
+    if (result.canceled) {
+      return null;
+    }
+    return result.filePaths[0];
+  });
+
   ipcMain.handle('project:load', async () => {
     return fileStore.readProjectMetadata();
   });

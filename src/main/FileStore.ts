@@ -1,16 +1,19 @@
 import path from 'path';
 import fs from 'fs-extra';
 import chokidar from 'chokidar';
-import { Note, GraphData, ProjectMetadata } from '../shared/types';
-import { NoteSchema, GraphDataSchema, ProjectMetadataSchema } from '../shared/schemas';
+import { Note, GraphData, ProjectMetadata, Settings } from '../shared/types';
+import { NoteSchema, GraphDataSchema, ProjectMetadataSchema, SettingsSchema } from '../shared/schemas';
 import { z } from 'zod';
 
 export class FileStore {
   private basePath: string;
+  private settingsDir: string;
   private watcher: chokidar.FSWatcher | null = null;
+  private onChangeCallback: ((event: string, path: string) => void) | null = null;
 
   constructor(basePath: string) {
     this.basePath = basePath;
+    this.settingsDir = basePath;
     this.initStructure();
   }
 
@@ -29,6 +32,10 @@ export class FileStore {
 
   public getProjectPath(): string {
     return path.join(this.basePath, 'project.json');
+  }
+
+  public getSettingsPath(): string {
+    return path.join(this.settingsDir, 'settings.json');
   }
 
   private async atomicWrite(filePath: string, data: any): Promise<void> {
@@ -97,6 +104,46 @@ export class FileStore {
     return this.safeRead(filePath, ProjectMetadataSchema);
   }
 
+  public async readSettings(): Promise<Settings> {
+    const filePath = this.getSettingsPath();
+    if (!await fs.pathExists(filePath)) {
+      const defaultSettings: Settings = {
+        theme: 'dark', // Default to dark as per ticket description ("Settings Schema (settings.json)" example says dark, but later Styling says Light theme: ... Dark theme: ...; wait, example JSON says "theme": "dark". And Acceptance criteria 2 says "Dark mode toggle (persists to settings.json)". I'll use 'dark' as default as per JSON example)
+        autoSaveInterval: 1000,
+        dataPath: this.settingsDir, // Default data path is same as settings dir
+        language: 'en',
+        editorFontSize: 14,
+        showLineNumbers: true,
+      };
+      await this.writeSettings(defaultSettings);
+      return defaultSettings;
+    }
+    const settings = await this.safeRead(filePath, SettingsSchema);
+    // Ensure dataPath in settings is respected
+    if (settings.dataPath && settings.dataPath !== this.basePath) {
+        this.setDataPath(settings.dataPath);
+    }
+    return settings;
+  }
+
+  public async writeSettings(settings: Settings): Promise<void> {
+    SettingsSchema.parse(settings);
+    // If dataPath changed, update it
+    if (settings.dataPath !== this.basePath) {
+        this.setDataPath(settings.dataPath);
+    }
+    await this.atomicWrite(this.getSettingsPath(), settings);
+  }
+
+  public setDataPath(newPath: string) {
+    if (this.basePath === newPath) return;
+    this.basePath = newPath;
+    this.initStructure();
+    if (this.onChangeCallback) {
+      this.watch(this.onChangeCallback);
+    }
+  }
+
   public async listNotes(): Promise<Note[]> {
     const notesDir = path.join(this.basePath, 'notes');
     await fs.ensureDir(notesDir);
@@ -118,6 +165,7 @@ export class FileStore {
   }
 
   public watch(onChange: (event: string, path: string) => void) {
+    this.onChangeCallback = onChange;
     if (this.watcher) {
       this.watcher.close();
     }

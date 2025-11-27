@@ -1,8 +1,11 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-import { Note, GraphData } from '../shared/types';
+import { Note, GraphData, Settings } from '../shared/types';
 
 contextBridge.exposeInMainWorld('fileSystem', {
   loadProject: () => ipcRenderer.invoke('project:load'),
+  loadSettings: () => ipcRenderer.invoke('settings:load'),
+  saveSettings: (settings: Settings) => ipcRenderer.invoke('settings:save', settings),
+  selectDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
   saveNote: (note: Note) => ipcRenderer.invoke('note:save', note),
   deleteNote: (id: string) => ipcRenderer.invoke('note:delete', id),
   saveGraph: (graph: GraphData) => ipcRenderer.invoke('graph:save', graph),
